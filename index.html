@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRYFT.AI — Software for Shared Mobility That Actually Works</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js"></script>
+  <style>
+    /* ========================= RESET & BASE ========================= */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --navy: #0a0e27;
+      --navy-light: #121738;
+      --navy-mid: #1a1f45;
+      --orange: #ff5f1f;
+      --orange-light: #ff7a42;
+      --white: #ffffff;
+      --gray-100: #f4f5f7;
+      --gray-200: #e8eaef;
+      --gray-300: #c4c8d4;
+      --gray-400: #8b92a8;
+      --gray-500: #5a6178;
+
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      --size-unit: 16;
+      --size-container-ideal: 1440;
+      --size-container-min: 992px;
+      --size-container-max: 1920px;
+      --size-container: clamp(var(--size-container-min), 100vw, var(--size-container-max));
+      --size-font: calc(var(--size-container) / (var(--size-container-ideal) / var(--size-unit)));
+    }
+
+    @media screen and (max-width: 991px) {
+      :root {
+        --size-container-ideal: 834;
+        --size-container-min: 768px;
+        --size-container-max: 991px;
+      }
+    }
+
+    @media screen and (max-width: 767px) {
+      :root {
+        --size-container-ideal: 390;
+        --size-container-min: 320px;
+        --size-container-max: 767px;
+      }
+    }
+
+    html { font-size: var(--size-font); scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--navy);
+      background: var(--white);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 2.5em;
+    }
+
+    /* ========================= UNDERLINE LINK (OSMO) ========================= */
+    [data-underline-link] {
+      text-decoration: none;
+      position: relative;
+    }
+    [data-underline-link]::before {
+      content: "";
+      position: absolute;
+      bottom: -0.0625em;
+      left: 0;
+      width: 100%;
+      height: 0.1em;
+      background-color: currentColor;
+      transition: transform 0.735s cubic-bezier(0.625, 0.05, 0, 1);
+      transform-origin: right;
+      transform: scaleX(0) rotate(0.001deg);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      [data-underline-link]:hover::before {
+        transform-origin: left;
+        transform: scaleX(1) rotate(0.001deg);
+      }
+    }
+
+    /* ========================= LOADER ========================= */
+    .loading-container {
+      z-index: 9999;
+      pointer-events: none;
+      background-color: var(--navy);
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+    .loading-screen {
+      pointer-events: auto;
+      background-color: var(--navy);
+      width: 100%;
+      height: 100%;
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .loading__progress {
+      width: 0.25em;
+      height: 100%;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+    }
+    .loading__progress-inner {
+      transform-origin: bottom;
+      background: linear-gradient(to top, var(--orange), var(--orange-light));
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .loading__numbers {
+      flex-flow: row;
+      align-items: flex-start;
+      font-size: calc(10vw + 10vh);
+      display: flex;
+      position: absolute;
+      bottom: 0.1em;
+      left: 0.23em;
+    }
+    .loading__number-group {
+      flex-flow: column;
+      height: 1em;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+    .loading__number-wrap {
+      will-change: transform;
+      flex-flow: column;
+      display: flex;
+      position: relative;
+    }
+    .loading__number {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--white);
+      position: relative;
+    }
+    .loading__percentage-wrap {
+      flex-flow: column;
+      justify-content: flex-start;
+      margin-top: 0.375em;
+      font-size: 0.3em;
+      display: flex;
+      overflow: hidden;
+    }
+    .loading__percentage {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--orange);
+      will-change: transform;
+      position: relative;
+    }
+    .loading__brand {
+      position: absolute;
+      top: 2em;
+      left: 2.5em;
+      font-family: var(--font-heading);
+      font-size: 1.75em;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      opacity: 0.15;
+    }
+
+    /* ========================= NAVIGATION ========================= */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      padding: 1.25em 2.5em;
+      transition: background 0.4s ease, backdrop-filter 0.4s ease;
+    }
+    .nav.is--scrolled {
+      background: rgba(10, 14, 39, 0.92);
+      backdrop-filter: blur(20px);
+    }
+    .nav__inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .nav__logo {
+      font-family: var(--font-heading);
+      font-size: 1.75em;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.03em;
+    }
+    .nav__logo span { color: var(--orange); }
+    .nav__links {
+      display: flex;
+      gap: 2.5em;
+      align-items: center;
+    }
+    .nav__link {
+      color: var(--gray-300);
+      font-size: 0.9375em;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    .nav__link:hover { color: var(--white); }
+    .nav__cta {
+      background: var(--orange);
+      color: var(--white);
+      padding: 0.75em 1.75em;
+      border-radius: 0.5em;
+      font-weight: 600;
+      font-size: 0.9375em;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .nav__cta:hover {
+      background: var(--orange-light);
+      transform: translateY(-1px);
+    }
+
+    @media screen and (max-width: 767px) {
+      .nav__links { display: none; }
+      .nav { padding: 1em 1.5em; }
+    }
+
+    /* ========================= HERO ========================= */
+    .hero {
+      background: var(--navy);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 10em 2.5em 5em;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -20%;
+      width: 70%;
+      height: 70%;
+      background: radial-gradient(circle, rgba(255, 95, 31, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      left: -10%;
+      width: 50%;
+      height: 50%;
+      background: radial-gradient(circle, rgba(255, 95, 31, 0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero__inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+      z-index: 2;
+    }
+    .hero__eyebrow {
+      color: var(--orange);
+      font-size: 1em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5em;
+    }
+    .hero__title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5em, 6vw, 5.5em);
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      max-width: 14em;
+      margin-bottom: 1em;
+    }
+    .hero__title span { color: var(--orange); }
+    .hero__subtitle {
+      font-size: 1.25em;
+      color: var(--gray-400);
+      max-width: 36em;
+      line-height: 1.6;
+      font-weight: 400;
+      margin-bottom: 2.5em;
+    }
+    .hero__actions {
+      display: flex;
+      gap: 1.25em;
+      align-items: center;
+    }
+    .btn-primary {
+      background: var(--orange);
+      color: var(--white);
+      padding: 1em 2.25em;
+      border-radius: 0.5em;
+      font-weight: 600;
+      font-size: 1.0625em;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .btn-primary:hover {
+      background: var(--orange-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255, 95, 31, 0.3);
+    }
+    .btn-secondary {
+      color: var(--gray-300);
+      padding: 1em 2em;
+      font-weight: 500;
+      font-size: 1.0625em;
+      transition: color 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .btn-secondary:hover { color: var(--white); }
+    .hero__grid-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 4em 4em;
+      pointer-events: none;
+    }
+    .hero__scroll-indicator {
+      position: absolute;
+      bottom: 2.5em;
+      right: 2.5em;
+      color: var(--gray-400);
+      font-size: 0.875em;
+      display: flex;
+      align-items: center;
+      gap: 0.75em;
+    }
+    .hero__scroll-line {
+      width: 1px;
+      height: 3em;
+      background: linear-gradient(to bottom, var(--orange), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.2); }
+    }
+
+    @media screen and (max-width: 767px) {
+      .hero { padding: 8em 1.5em 3em; }
+      .hero__actions { flex-direction: column; align-items: flex-start; }
+      .hero__scroll-indicator { display: none; }
+    }
+
+    /* ========================= LOGO WALL ========================= */
+    .logos-section {
+      padding: 4em 0;
+      background: var(--gray-100);
+      border-top: 1px solid var(--gray-200);
+    }
+    .logos-section__label {
+      text-align: center;
+      font-size: 0.875em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gray-400);
+      margin-bottom: 2.5em;
+    }
+    .logo-wall {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    .logo-wall__collection { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 2.5em; }
+    .logo-wall__list { display: flex; flex-flow: wrap; }
+    .logo-wall__item { width: 25%; position: relative; }
+    [data-logo-wall-list] [data-logo-wall-item]:nth-child(n+9) { display: none; }
+    .logo-wall__logo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .logo-wall__logo-before { padding-top: 50%; }
+    .logo-wall__logo-target {
+      justify-content: center;
+      align-items: center;
+      width: 60%;
+      height: 40%;
+      display: flex;
+      position: absolute;
+    }
+    .logo-wall__logo-img {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      opacity: 0.4;
+      filter: grayscale(100%);
+      transition: opacity 0.3s, filter 0.3s;
+    }
+    .logo-wall__item:hover .logo-wall__logo-img {
+      opacity: 0.7;
+      filter: grayscale(0%);
+    }
+    @media screen and (max-width: 991px) {
+      .logo-wall__item { width: 33.333%; }
+      [data-logo-wall-list] [data-logo-wall-item]:nth-child(n+7) { display: none; }
+    }
+
+    /* ========================= FEATURES ========================= */
+    .features {
+      padding: 8em 0;
+    }
+    .section-label {
+      font-size: 0.875em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--orange);
+      margin-bottom: 1.5em;
+    }
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2em, 3.5vw, 3em);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1em;
+      max-width: 16em;
+    }
+    .section-desc {
+      font-size: 1.125em;
+      color: var(--gray-500);
+      line-height: 1.6;
+      max-width: 36em;
+      margin-bottom: 4em;
+    }
+    .features__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2em;
+    }
+    .feature-card {
+      background: var(--gray-100);
+      border-radius: 1em;
+      padding: 2.5em;
+      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.4s;
+      border: 1px solid transparent;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(10, 14, 39, 0.08);
+      border-color: var(--gray-200);
+    }
+    .feature-card__icon {
+      width: 3em;
+      height: 3em;
+      background: var(--navy);
+      border-radius: 0.75em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5em;
+    }
+    .feature-card__icon svg {
+      width: 1.5em;
+      height: 1.5em;
+      color: var(--orange);
+    }
+    .feature-card__title {
+      font-family: var(--font-heading);
+      font-size: 1.375em;
+      font-weight: 600;
+      margin-bottom: 0.75em;
+      letter-spacing: -0.02em;
+    }
+    .feature-card__desc {
+      font-size: 0.9375em;
+      color: var(--gray-500);
+      line-height: 1.6;
+    }
+    @media screen and (max-width: 991px) {
+      .features__grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media screen and (max-width: 767px) {
+      .features__grid { grid-template-columns: 1fr; }
+      .features { padding: 5em 0; }
+    }
+
+    /* ========================= STATS ========================= */
+    .stats {
+      background: var(--navy);
+      padding: 6em 0;
+      overflow: hidden;
+    }
+    .stats__inner {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2em;
+      text-align: center;
+    }
+    .stat__number {
+      font-family: var(--font-heading);
+      font-size: clamp(2.5em, 4vw, 4em);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 0.25em;
+    }
+    .stat__number span { color: var(--orange); }
+    .stat__label {
+      font-size: 0.9375em;
+      color: var(--gray-400);
+      font-weight: 500;
+    }
+    @media screen and (max-width: 767px) {
+      .stats__inner { grid-template-columns: repeat(2, 1fr); gap: 3em; }
+      .stats { padding: 4em 0; }
+    }
+
+    /* ========================= TESTIMONIALS ========================= */
+    .testimonials {
+      padding: 8em 0;
+      background: var(--gray-100);
+    }
+    .testimonial-lines {
+      display: flex;
+      flex-flow: wrap;
+      gap: 1.25em;
+    }
+    .testimonial-lines__controls {
+      display: flex;
+      gap: 1em;
+      width: 33.333%;
+    }
+    .testimonial-lines__main {
+      display: flex;
+      flex-direction: column;
+      gap: 3em;
+      flex: 1;
+    }
+    .testimonial-lines__button {
+      background: transparent;
+      border: 1px solid var(--gray-300);
+      border-radius: 0.375em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 2.75em;
+      height: 2.75em;
+      transition: all 0.3s;
+    }
+    .testimonial-lines__button:hover {
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+    .testimonial-lines__button:hover svg { color: var(--white); }
+    .testimonial-lines__arrow { width: 0.75em; color: var(--navy); }
+    .testimonial-lines__main-details {
+      display: flex;
+      gap: 1.5em;
+      align-items: center;
+    }
+    .testimonial-lines__p {
+      margin-bottom: 0;
+      font-size: 1.125em;
+      line-height: 1.2;
+    }
+    .testimonial-lines__p.is--faded { opacity: 0.5; }
+    .testimonial-lines__count { width: 1ch; display: inline-block; }
+    .testimonial-lines__collection { width: 100%; }
+    .testimonial-lines__list {
+      width: 100%;
+      display: grid;
+      position: relative;
+    }
+    .testimonial-lines__item {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5em;
+      grid-area: 1 / 1;
+      width: 100%;
+      opacity: 0;
+      visibility: hidden;
+    }
+    .testimonial-lines__item.is--active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .testimonial-lines__h {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75em, 3vw, 2.75em);
+      font-weight: 500;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+    .text-line-mask {
+      padding-bottom: 0.2em;
+      margin-bottom: -0.2em;
+    }
+    .testimonial-lines__item-details {
+      display: flex;
+      gap: 1.25em;
+      align-items: center;
+    }
+    .testimonial-lines__item-visual {
+      width: 3.5em;
+      height: 3.5em;
+      border-radius: 100em;
+      overflow: hidden;
+      background: var(--gray-200);
+    }
+    .testimonial-lines__item-img {
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+    }
+    @media screen and (max-width: 767px) {
+      .testimonial-lines { gap: 2em; }
+      .testimonial-lines__controls { order: 9999; width: 100%; }
+    }
+
+    /* ========================= PRICING ========================= */
+    .pricing {
+      padding: 8em 0;
+    }
+    .pricing__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5em;
+      margin-top: 3em;
+    }
+    .pricing-card {
+      border: 1px solid var(--gray-200);
+      border-radius: 1em;
+      padding: 2.5em;
+      transition: all 0.4s;
+      position: relative;
+    }
+    .pricing-card.is--featured {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+      transform: scale(1.03);
+    }
+    .pricing-card:hover:not(.is--featured) {
+      border-color: var(--orange);
+      box-shadow: 0 8px 30px rgba(255, 95, 31, 0.1);
+    }
+    .pricing-card__badge {
+      position: absolute;
+      top: -0.75em;
+      right: 1.5em;
+      background: var(--orange);
+      color: var(--white);
+      font-size: 0.75em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5em 1em;
+      border-radius: 0.375em;
+    }
+    .pricing-card__name {
+      font-family: var(--font-heading);
+      font-size: 1.25em;
+      font-weight: 600;
+      margin-bottom: 0.5em;
+    }
+    .pricing-card__desc {
+      font-size: 0.875em;
+      color: var(--gray-400);
+      margin-bottom: 2em;
+      line-height: 1.5;
+    }
+    .pricing-card.is--featured .pricing-card__desc { color: var(--gray-300); }
+    .pricing-card__price {
+      font-family: var(--font-heading);
+      font-size: 2.75em;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.1em;
+    }
+    .pricing-card__price span {
+      font-size: 0.4em;
+      font-weight: 400;
+      color: var(--gray-400);
+    }
+    .pricing-card__period {
+      font-size: 0.875em;
+      color: var(--gray-400);
+      margin-bottom: 2em;
+    }
+    .pricing-card__divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin-bottom: 2em;
+    }
+    .pricing-card.is--featured .pricing-card__divider { background: var(--navy-mid); }
+    .pricing-card__features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75em;
+      margin-bottom: 2.5em;
+    }
+    .pricing-card__features li {
+      font-size: 0.9375em;
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      gap: 0.75em;
+    }
+    .pricing-card.is--featured .pricing-card__features li { color: var(--gray-300); }
+    .pricing-card__features li::before {
+      content: '';
+      width: 1.25em;
+      height: 1.25em;
+      background: var(--orange);
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E") no-repeat center;
+      mask-size: contain;
+      flex-shrink: 0;
+    }
+    .pricing-card__cta {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 0.875em;
+      border-radius: 0.5em;
+      font-weight: 600;
+      font-size: 0.9375em;
+      transition: all 0.3s;
+    }
+    .pricing-card__cta.is--outline {
+      border: 1px solid var(--gray-200);
+      color: var(--navy);
+    }
+    .pricing-card__cta.is--outline:hover {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+    .pricing-card__cta.is--filled {
+      background: var(--orange);
+      color: var(--white);
+    }
+    .pricing-card__cta.is--filled:hover {
+      background: var(--orange-light);
+      transform: translateY(-1px);
+    }
+
+    @media screen and (max-width: 991px) {
+      .pricing__grid { grid-template-columns: 1fr; max-width: 28em; margin-left: auto; margin-right: auto; }
+      .pricing-card.is--featured { transform: none; }
+    }
+
+    /* ========================= MARQUEE ========================= */
+    .marquee-section {
+      padding: 2em 0;
+      background: var(--navy);
+      overflow: hidden;
+    }
+    .marquee-advanced { width: 100vw; position: relative; overflow: hidden; }
+    .marquee-advanced__scroll { will-change: transform; width: 100%; display: flex; position: relative; }
+    .marquee-advanced__collection { will-change: transform; display: flex; position: relative; }
+    .marquee-advanced__item {
+      display: flex;
+      align-items: center;
+      font-size: max(3em, 6vw);
+    }
+    .marquee__advanced__p {
+      white-space: nowrap;
+      margin: 0 0.5em 0 0;
+      font-family: var(--font-heading);
+      font-size: 1em;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+    }
+    .marquee__advanced__dot {
+      width: 0.2em;
+      height: 0.2em;
+      background: var(--orange);
+      border-radius: 50%;
+      margin-right: 0.5em;
+      flex-shrink: 0;
+    }
+
+    /* ========================= CTA SECTION ========================= */
+    .cta-section {
+      padding: 8em 0;
+      text-align: center;
+    }
+    .cta-section__title {
+      font-family: var(--font-heading);
+      font-size: clamp(2em, 4vw, 3.5em);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 0.75em;
+    }
+    .cta-section__desc {
+      font-size: 1.125em;
+      color: var(--gray-500);
+      max-width: 32em;
+      margin: 0 auto 2.5em;
+      line-height: 1.6;
+    }
+
+    /* ========================= FOOTER (PARALLAX) ========================= */
+    .footer-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .footer {
+      background: var(--navy);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 80vh;
+      padding: 5em 2.5em 2.5em;
+      position: relative;
+    }
+    .footer__top {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 3em;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .footer__brand-desc {
+      font-size: 1em;
+      color: var(--gray-400);
+      line-height: 1.6;
+      max-width: 20em;
+      margin-top: 1.5em;
+    }
+    .footer__col-title {
+      font-size: 0.8125em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gray-400);
+      margin-bottom: 1.5em;
+    }
+    .footer__links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75em;
+    }
+    .footer__link {
+      color: var(--gray-300);
+      font-size: 1em;
+      font-weight: 400;
+      transition: color 0.3s;
+    }
+    .footer__link:hover { color: var(--orange); }
+    .footer__bottom {
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 2em;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer__bottom-text {
+      font-size: 0.8125em;
+      color: var(--gray-500);
+    }
+    .footer__socials {
+      display: flex;
+      gap: 1.25em;
+    }
+    .footer__social-link {
+      color: var(--gray-400);
+      transition: color 0.3s;
+    }
+    .footer__social-link:hover { color: var(--orange); }
+    .footer__big-logo {
+      font-family: var(--font-heading);
+      font-size: clamp(4em, 12vw, 10em);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: rgba(255,255,255,0.03);
+      text-align: center;
+      margin-top: 2em;
+      line-height: 1;
+      user-select: none;
+    }
+    .footer-wrap__dark {
+      opacity: 0;
+      pointer-events: none;
+      background-color: #050818;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    @media screen and (max-width: 767px) {
+      .footer__top { grid-template-columns: 1fr; gap: 2.5em; }
+      .footer { padding: 3em 1.5em 2em; }
+      .footer__bottom { flex-direction: column; gap: 1em; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================= LOADER ========================= -->
+  <div class="loading-container">
+    <div class="loading-screen">
+      <div class="loading__progress">
+        <div class="loading__progress-inner"></div>
+      </div>
+      <div class="loading__brand">DRYFT<span style="color: var(--orange);">.AI</span></div>
+      <div class="loading__numbers">
+        <div class="loading__number-group is--first">
+          <div class="loading__number-wrap"><span class="loading__number">1</span></div>
+        </div>
+        <div class="loading__number-group is--second">
+          <div class="loading__number-wrap"><span class="loading__number">1</span><span class="loading__number">2</span><span class="loading__number">3</span><span class="loading__number">4</span><span class="loading__number">5</span><span class="loading__number">6</span><span class="loading__number">7</span><span class="loading__number">8</span><span class="loading__number">9</span><span class="loading__number">0</span></div>
+        </div>
+        <div class="loading__number-group is--third">
+          <div class="loading__number-wrap"><span class="loading__number">1</span><span class="loading__number">2</span><span class="loading__number">3</span><span class="loading__number">4</span><span class="loading__number">5</span><span class="loading__number">6</span><span class="loading__number">7</span><span class="loading__number">8</span><span class="loading__number">9</span><span class="loading__number">0</span></div>
+        </div>
+        <div class="loading__percentage-wrap"><span class="loading__percentage">%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= NAVIGATION ========================= -->
+  <nav class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="#" class="nav__logo">DRYFT<span>.AI</span></a>
+      <div class="nav__links">
+        <a href="#features" class="nav__link" data-underline-link>Platform</a>
+        <a href="#pricing" class="nav__link" data-underline-link>Pricing</a>
+        <a href="#testimonials" class="nav__link" data-underline-link>Customers</a>
+        <a href="#" class="nav__link" data-underline-link>Resources</a>
+        <a href="#" class="nav__cta">Get a Demo</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================= HERO ========================= -->
+  <section class="hero">
+    <div class="hero__grid-bg"></div>
+    <div class="hero__inner" data-reveal-group data-stagger="120">
+      <p class="hero__eyebrow">Shared Mobility Software</p>
+      <h1 class="hero__title">Launch fleets faster.<br><span>Scale smarter.</span></h1>
+      <p class="hero__subtitle">The all-in-one platform trusted by the world's leading car-sharing, scooter, and bike-sharing operators. From your first vehicle to your 10,000th — DRYFT.AI powers profitable mobility.</p>
+      <div class="hero__actions">
+        <a href="#" class="btn-primary">
+          Request a Demo
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#features" class="btn-secondary">
+          Explore Platform
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10m0 0l4-4m-4 4L4 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="hero__scroll-indicator">
+      <span>Scroll</span>
+      <div class="hero__scroll-line"></div>
+    </div>
+  </section>
+
+
+  <!-- ========================= FEATURES ========================= -->
+  <section class="features" id="features">
+    <div class="container">
+      <div data-reveal-group data-stagger="80">
+        <p class="section-label">Platform</p>
+        <h2 class="section-title">Everything you need to run a profitable shared mobility business</h2>
+        <p class="section-desc">One platform. Every vehicle type. Complete operational control from day one.</p>
+      </div>
+      <div class="features__grid" data-reveal-group data-stagger="100">
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+          </div>
+          <h3 class="feature-card__title">Dynamic Pricing Engine</h3>
+          <p class="feature-card__desc">AI-powered surge pricing, loyalty discounts, and zone-based rates that maximize revenue per ride automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+          </div>
+          <h3 class="feature-card__title">Operations Dashboard</h3>
+          <p class="feature-card__desc">Real-time fleet monitoring, predictive maintenance alerts, and automated task assignment for field teams.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3 class="feature-card__title">White-Label Apps</h3>
+          <p class="feature-card__desc">Custom-branded rider and driver apps for iOS and Android. Your brand, your experience, deployed in weeks.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <h3 class="feature-card__title">Fleet Intelligence</h3>
+          <p class="feature-card__desc">Smart rebalancing, demand forecasting, and utilization analytics that keep every vehicle earning.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <h3 class="feature-card__title">API-First Architecture</h3>
+          <p class="feature-card__desc">RESTful APIs, webhooks, and SDKs. Integrate with any IoT provider, payment gateway, or third-party platform.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="feature-card__title">Compliance & Security</h3>
+          <p class="feature-card__desc">GDPR-ready data handling, automated regulatory reporting, and enterprise-grade security built in from the ground up.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= STATS ========================= -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats__inner" data-reveal-group data-stagger="120">
+        <div class="stat" data-stat>
+          <div class="stat__number"><span data-counter="420">0</span>+</div>
+          <div class="stat__label">Cities worldwide</div>
+        </div>
+        <div class="stat" data-stat>
+          <div class="stat__number"><span data-counter="35">0</span>M<span>+</span></div>
+          <div class="stat__label">Trips completed yearly</div>
+        </div>
+        <div class="stat" data-stat>
+          <div class="stat__number"><span data-counter="99">0</span>.<span>9%</span></div>
+          <div class="stat__label">Platform uptime</div>
+        </div>
+        <div class="stat" data-stat>
+          <div class="stat__number"><span data-counter="72">0</span>h</div>
+          <div class="stat__label">Average launch time</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= TESTIMONIALS ========================= -->
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <div data-reveal-group>
+        <p class="section-label">Customers</p>
+      </div>
+      <div data-testimonial-wrap data-autoplay="true" data-autoplay-duration="6000" class="testimonial-lines">
+        <div class="testimonial-lines__controls">
+          <button data-prev aria-label="previous testimonial" class="testimonial-lines__button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 12 12" fill="none" class="testimonial-lines__arrow">
+              <path d="M5.26512 12L6.43721 10.7746L1.48837 5.28169V6.71831L6.45581 1.22535L5.28372 0L-2.21369e-07 6L5.26512 12ZM12 6.97183V5.02817H1.30232V6.97183H12Z" fill="currentColor"/>
+            </svg>
+          </button>
+          <button data-next aria-label="next testimonial" class="testimonial-lines__button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 12 12" fill="none" class="testimonial-lines__arrow">
+              <path d="M6.73488 12L5.56279 10.7746L10.5116 5.28169V6.71831L5.54419 1.22535L6.71628 0L12 6L6.73488 12ZM0 6.97183V5.02817H10.6977V6.97183H0Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+        <div class="testimonial-lines__main">
+          <div class="testimonial-lines__main-details">
+            <p class="testimonial-lines__p is--faded"><span data-current class="testimonial-lines__count">1</span> / <span data-total>4</span></p>
+            <p class="testimonial-lines__p">What operators say about DRYFT.AI:</p>
+          </div>
+          <div class="testimonial-lines__collection">
+            <div role="list" data-testimonial-list class="testimonial-lines__list">
+              <div aria-hidden="false" data-testimonial-item role="listitem" class="testimonial-lines__item is--active">
+                <h3 data-testimonial-text class="testimonial-lines__h">"We launched in three cities in under 90 days. DRYFT.AI's onboarding team made it feel effortless — the API docs were solid and their fleet dashboard gave us visibility we never had before."</h3>
+                <div class="testimonial-lines__item-details">
+                  <div data-testimonial-img class="testimonial-lines__item-visual">
+                    <img src="https://cdn.prod.website-files.com/697946f9c74d6e83502491c6/6979fcf493ed513c80fb67b0_img-1.avif" class="testimonial-lines__item-img">
+                  </div>
+                  <div>
+                    <p data-testimonial-split class="testimonial-lines__p">Elena Voss</p>
+                    <p data-testimonial-split class="testimonial-lines__p is--faded">CTO, UrbanLoop Mobility</p>
+                  </div>
+                </div>
+              </div>
+              <div aria-hidden="true" data-testimonial-item role="listitem" class="testimonial-lines__item">
+                <h3 data-testimonial-text class="testimonial-lines__h">"The dynamic pricing alone paid for the platform in two months. We went from guessing surge zones to having real-time, data-driven rates that riders actually accepted."</h3>
+                <div class="testimonial-lines__item-details">
+                  <div data-testimonial-img class="testimonial-lines__item-visual">
+                    <img src="https://cdn.prod.website-files.com/697946f9c74d6e83502491c6/6979fcf4340be6c44df0fa86_img-2.avif" class="testimonial-lines__item-img">
+                  </div>
+                  <div>
+                    <p data-testimonial-split class="testimonial-lines__p">Marcus Hahn</p>
+                    <p data-testimonial-split class="testimonial-lines__p is--faded">Founder, VoltRide Berlin</p>
+                  </div>
+                </div>
+              </div>
+              <div aria-hidden="true" data-testimonial-item role="listitem" class="testimonial-lines__item">
+                <h3 data-testimonial-text class="testimonial-lines__h">"Before DRYFT.AI, we had four different tools for fleet management, payments, and analytics. Now it's one platform. Our ops team went from reactive to proactive overnight."</h3>
+                <div class="testimonial-lines__item-details">
+                  <div data-testimonial-img class="testimonial-lines__item-visual">
+                    <img src="https://cdn.prod.website-files.com/697946f9c74d6e83502491c6/6979fcf41e2c7bc67c213c31_img-3.avif" class="testimonial-lines__item-img">
+                  </div>
+                  <div>
+                    <p data-testimonial-split class="testimonial-lines__p">Ines Kowalski</p>
+                    <p data-testimonial-split class="testimonial-lines__p is--faded">Head of Operations, Fjord Scooters</p>
+                  </div>
+                </div>
+              </div>
+              <div aria-hidden="true" data-testimonial-item role="listitem" class="testimonial-lines__item">
+                <h3 data-testimonial-text class="testimonial-lines__h">"Scaling from 200 to 3,000 vehicles was seamless. The rebalancing algorithm alone reduced our dead-mileage by 40%. DRYFT.AI isn't software — it's a competitive advantage."</h3>
+                <div class="testimonial-lines__item-details">
+                  <div data-testimonial-img class="testimonial-lines__item-visual">
+                    <img src="https://cdn.prod.website-files.com/697946f9c74d6e83502491c6/6979fcf45f6f900cd99e3701_img-4.avif" class="testimonial-lines__item-img">
+                  </div>
+                  <div>
+                    <p data-testimonial-split class="testimonial-lines__p">Rajan Mehta</p>
+                    <p data-testimonial-split class="testimonial-lines__p is--faded">CEO, CityWheel Asia</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= PRICING ========================= -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div data-reveal-group data-stagger="80">
+        <p class="section-label">Pricing</p>
+        <h2 class="section-title">Transparent pricing that scales with your fleet</h2>
+        <p class="section-desc">No hidden fees. No per-ride commissions. Just clean, predictable monthly pricing.</p>
+      </div>
+      <div class="pricing__grid" data-reveal-group data-stagger="120">
+        <div class="pricing-card">
+          <h3 class="pricing-card__name">Starter</h3>
+          <p class="pricing-card__desc">For operators launching in a single city with up to 200 vehicles.</p>
+          <div class="pricing-card__price">€2,900<span>/mo</span></div>
+          <p class="pricing-card__period">Billed annually</p>
+          <div class="pricing-card__divider"></div>
+          <ul class="pricing-card__features">
+            <li>Up to 200 vehicles</li>
+            <li>White-label rider app</li>
+            <li>Operations dashboard</li>
+            <li>Standard integrations</li>
+            <li>Email support</li>
+          </ul>
+          <a href="#" class="pricing-card__cta is--outline">Get Started</a>
+        </div>
+        <div class="pricing-card is--featured">
+          <div class="pricing-card__badge">Most Popular</div>
+          <h3 class="pricing-card__name">Growth</h3>
+          <p class="pricing-card__desc">For multi-city operators scaling fast and needing full platform power.</p>
+          <div class="pricing-card__price">€6,500<span>/mo</span></div>
+          <p class="pricing-card__period">Billed annually</p>
+          <div class="pricing-card__divider"></div>
+          <ul class="pricing-card__features">
+            <li>Up to 2,000 vehicles</li>
+            <li>Dynamic pricing engine</li>
+            <li>Fleet intelligence & AI</li>
+            <li>Multi-city management</li>
+            <li>API & webhook access</li>
+            <li>Priority support</li>
+          </ul>
+          <a href="#" class="pricing-card__cta is--filled">Get Started</a>
+        </div>
+        <div class="pricing-card">
+          <h3 class="pricing-card__name">Enterprise</h3>
+          <p class="pricing-card__desc">For large operators needing custom integrations and dedicated support.</p>
+          <div class="pricing-card__price">Custom</div>
+          <p class="pricing-card__period">Contact for pricing</p>
+          <div class="pricing-card__divider"></div>
+          <ul class="pricing-card__features">
+            <li>Unlimited vehicles</li>
+            <li>Custom integrations</li>
+            <li>Dedicated account manager</li>
+            <li>SLA guarantees</li>
+            <li>On-premise option</li>
+            <li>24/7 phone support</li>
+          </ul>
+          <a href="#" class="pricing-card__cta is--outline">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= MARQUEE ========================= -->
+  <section class="marquee-section">
+    <div data-marquee-duplicate="2" data-marquee-scroll-direction-target data-marquee-direction="left" data-marquee-status="normal" data-marquee-speed="20" data-marquee-scroll-speed="8" class="marquee-advanced">
+      <div data-marquee-scroll-target class="marquee-advanced__scroll">
+        <div data-marquee-collection-target class="marquee-advanced__collection">
+          <div class="marquee-advanced__item">
+            <div class="marquee__advanced__dot"></div>
+            <p class="marquee__advanced__p">Launch Faster</p>
+            <div class="marquee__advanced__dot"></div>
+            <p class="marquee__advanced__p">Scale Smarter</p>
+            <div class="marquee__advanced__dot"></div>
+            <p class="marquee__advanced__p">Earn More</p>
+            <div class="marquee__advanced__dot"></div>
+            <p class="marquee__advanced__p">Move Cities</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= CTA SECTION ========================= -->
+  <section class="cta-section">
+    <div class="container" data-reveal-group>
+      <h2 class="cta-section__title">Ready to move your city?</h2>
+      <p class="cta-section__desc">Join 200+ operators across 420 cities who chose DRYFT.AI to build, launch, and scale their shared mobility business.</p>
+      <a href="#" class="btn-primary">
+        Book Your Demo
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- ========================= FOOTER (PARALLAX) ========================= -->
+  <div data-footer-parallax class="footer-wrap">
+    <footer data-footer-parallax-inner class="footer">
+      <div class="footer__top">
+        <div>
+          <a href="#" class="nav__logo" style="color: #fff; font-size: 1.75em;">DRYFT<span style="color: var(--orange);">.AI</span></a>
+          <p class="footer__brand-desc">The shared mobility platform built for operators who refuse to compromise on speed, scale, or profitability.</p>
+        </div>
+        <div>
+          <p class="footer__col-title">Platform</p>
+          <div class="footer__links">
+            <a href="#" class="footer__link" data-underline-link>Car Sharing</a>
+            <a href="#" class="footer__link" data-underline-link>Micromobility</a>
+            <a href="#" class="footer__link" data-underline-link>Corporate Sharing</a>
+            <a href="#" class="footer__link" data-underline-link>API Docs</a>
+          </div>
+        </div>
+        <div>
+          <p class="footer__col-title">Company</p>
+          <div class="footer__links">
+            <a href="#" class="footer__link" data-underline-link>About</a>
+            <a href="#" class="footer__link" data-underline-link>Careers</a>
+            <a href="#" class="footer__link" data-underline-link>Blog</a>
+            <a href="#" class="footer__link" data-underline-link>Contact</a>
+          </div>
+        </div>
+        <div>
+          <p class="footer__col-title">Resources</p>
+          <div class="footer__links">
+            <a href="#" class="footer__link" data-underline-link>Documentation</a>
+            <a href="#" class="footer__link" data-underline-link>Case Studies</a>
+            <a href="#" class="footer__link" data-underline-link>Webinars</a>
+            <a href="#" class="footer__link" data-underline-link>Status Page</a>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="footer__bottom">
+          <p class="footer__bottom-text">&copy; 2026 DRYFT.AI Mobility GmbH. All rights reserved.</p>
+          <div class="footer__socials">
+            <a href="#" class="footer__social-link" data-underline-link>LinkedIn</a>
+            <a href="#" class="footer__social-link" data-underline-link>X/Twitter</a>
+            <a href="#" class="footer__social-link" data-underline-link>GitHub</a>
+          </div>
+        </div>
+        <div class="footer__big-logo">DRYFT.AI</div>
+      </div>
+    </footer>
+    <div data-footer-parallax-dark class="footer-wrap__dark"></div>
+  </div>
+
+  <!-- ========================= SCRIPTS ========================= -->
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // ==================== NAV SCROLL ====================
+    ScrollTrigger.create({
+      start: 'top -80',
+      end: 99999,
+      toggleClass: { className: 'is--scrolled', targets: '#nav' }
+    });
+
+    // ==================== NUMBER LOADER (OSMO) ====================
+    function initLoaderThreeSteps() {
+      var tl = gsap.timeline();
+      gsap.defaults({ ease: "Expo.easeInOut", duration: 1.2 });
+
+      var randomNumbers1 = gsap.utils.random([2, 3, 4]);
+      var randomNumbers2 = gsap.utils.random([5, 6]);
+      var randomNumbers3 = gsap.utils.random([1, 5]);
+      var randomNumbers4 = gsap.utils.random([7, 8, 9]);
+
+      tl.set(".loading-screen", { display: "block" });
+      tl.set(".loading__progress-inner", { scaleY: 0 });
+      tl.set(".loading__number-group.is--first .loading__number-wrap, .loading__percentage", { yPercent: 100 });
+      tl.set(".loading__number-group.is--second .loading__number-wrap, .loading__number-group.is--third .loading__number-wrap", { yPercent: 10 });
+
+      tl.to(".loading__progress-inner", { scaleY: (randomNumbers1 + "" + randomNumbers3) / 100 });
+      tl.to(".loading__percentage", { yPercent: 0 }, "<");
+      tl.to(".loading__number-group.is--second .loading__number-wrap", { yPercent: (randomNumbers1 - 1) * -10 }, "<");
+      tl.to(".loading__number-group.is--third .loading__number-wrap", { yPercent: (randomNumbers3 - 1) * -10 }, "<");
+
+      tl.to(".loading__progress-inner", { scaleY: (randomNumbers2 + "" + randomNumbers4) / 100 });
+      tl.to(".loading__number-group.is--second .loading__number-wrap", { yPercent: (randomNumbers2 - 1) * -10 }, "<");
+      tl.to(".loading__number-group.is--third .loading__number-wrap", { yPercent: (randomNumbers4 - 1) * -10 }, "<");
+
+      tl.to(".loading__progress-inner", { scaleY: 1 });
+      tl.to(".loading__number-group.is--second .loading__number-wrap", { yPercent: -90 }, "<");
+      tl.to(".loading__number-group.is--third .loading__number-wrap", { yPercent: -90 }, "<");
+      tl.to(".loading__number-group.is--first .loading__number-wrap", { yPercent: 0 }, "<");
+
+      // Exit: slide loader up and reveal page
+      tl.to(".loading-container", {
+        yPercent: -100,
+        duration: 0.8,
+        ease: "power4.inOut",
+        delay: 0.3
+      });
+      tl.set(".loading-container", { display: "none" });
+    }
+
+    // ==================== ELEMENTS REVEAL ON SCROLL (OSMO) ====================
+    function initContentRevealScroll(){
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const ctx = gsap.context(() => {
+        document.querySelectorAll('[data-reveal-group]').forEach(groupEl => {
+          const groupStaggerSec = (parseFloat(groupEl.getAttribute('data-stagger')) || 100) / 1000;
+          const groupDistance = groupEl.getAttribute('data-distance') || '2em';
+          const triggerStart = groupEl.getAttribute('data-start') || 'top 85%';
+          const animDuration = 0.8;
+          const animEase = "power4.inOut";
+          if (prefersReduced) { gsap.set(groupEl, { clearProps: 'all', y: 0, autoAlpha: 1 }); return; }
+          const directChildren = Array.from(groupEl.children).filter(el => el.nodeType === 1);
+          if (!directChildren.length) {
+            gsap.set(groupEl, { y: groupDistance, autoAlpha: 0 });
+            ScrollTrigger.create({ trigger: groupEl, start: triggerStart, once: true,
+              onEnter: () => gsap.to(groupEl, { y: 0, autoAlpha: 1, duration: animDuration, ease: animEase, onComplete: () => gsap.set(groupEl, { clearProps: 'all' }) })
+            });
+            return;
+          }
+          directChildren.forEach(child => gsap.set(child, { y: child.getAttribute('data-distance') || groupDistance, autoAlpha: 0 }));
+          ScrollTrigger.create({ trigger: groupEl, start: triggerStart, once: true,
+            onEnter: () => {
+              const tl = gsap.timeline();
+              directChildren.forEach((child, i) => {
+                tl.to(child, { y: 0, autoAlpha: 1, duration: animDuration, ease: animEase, onComplete: () => gsap.set(child, { clearProps: 'all' }) }, i * groupStaggerSec);
+              });
+            }
+          });
+        });
+      });
+      return () => ctx.revert();
+    }
+
+    // ==================== COUNTER ANIMATION ====================
+    function initCounters() {
+      document.querySelectorAll('[data-counter]').forEach(el => {
+        const target = parseInt(el.getAttribute('data-counter'));
+        ScrollTrigger.create({
+          trigger: el.closest('.stat'),
+          start: 'top 85%',
+          once: true,
+          onEnter: () => {
+            gsap.to({ val: 0 }, {
+              val: target,
+              duration: 2,
+              ease: 'power2.out',
+              onUpdate: function() { el.textContent = Math.round(this.targets()[0].val); }
+            });
+          }
+        });
+      });
+    }
+
+    // ==================== LOGO WALL CYCLE (OSMO) ====================
+    function initLogoWallCycle() {
+      const loopDelay = 1.5;
+      const duration = 0.9;
+      document.querySelectorAll('[data-logo-wall-cycle-init]').forEach(root => {
+        const list = root.querySelector('[data-logo-wall-list]');
+        const items = Array.from(list.querySelectorAll('[data-logo-wall-item]'));
+        const shuffleFront = root.getAttribute('data-logo-wall-shuffle') !== 'false';
+        const originalTargets = items.map(item => item.querySelector('[data-logo-wall-target]')).filter(Boolean);
+        let visibleItems = [], visibleCount = 0, pool = [], pattern = [], patternIndex = 0, tl;
+        function isVisible(el) { return window.getComputedStyle(el).display !== 'none'; }
+        function shuffleArray(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+        function setup() {
+          if (tl) tl.kill();
+          visibleItems = items.filter(isVisible);
+          visibleCount = visibleItems.length;
+          pattern = shuffleArray(Array.from({ length: visibleCount }, (_, i) => i));
+          patternIndex = 0;
+          items.forEach(item => { item.querySelectorAll('[data-logo-wall-target]').forEach(old => old.remove()); });
+          pool = originalTargets.map(n => n.cloneNode(true));
+          let front, rest;
+          if (shuffleFront) { const shuffledAll = shuffleArray(pool); front = shuffledAll.slice(0, visibleCount); rest = shuffleArray(shuffledAll.slice(visibleCount)); }
+          else { front = pool.slice(0, visibleCount); rest = shuffleArray(pool.slice(visibleCount)); }
+          pool = front.concat(rest);
+          for (let i = 0; i < visibleCount; i++) {
+            const parent = visibleItems[i].querySelector('[data-logo-wall-target-parent]') || visibleItems[i];
+            parent.appendChild(pool.shift());
+          }
+          tl = gsap.timeline({ repeat: -1, repeatDelay: loopDelay });
+          tl.call(swapNext);
+          tl.play();
+        }
+        function swapNext() {
+          const nowCount = items.filter(isVisible).length;
+          if (nowCount !== visibleCount) { setup(); return; }
+          if (!pool.length) return;
+          const idx = pattern[patternIndex % visibleCount];
+          patternIndex++;
+          const container = visibleItems[idx];
+          const parent = container.querySelector('[data-logo-wall-target-parent]') || container;
+          const existing = parent.querySelectorAll('[data-logo-wall-target]');
+          if (existing.length > 1) return;
+          const current = parent.querySelector('[data-logo-wall-target]');
+          const incoming = pool.shift();
+          gsap.set(incoming, { yPercent: 50, autoAlpha: 0 });
+          parent.appendChild(incoming);
+          if (current) {
+            gsap.to(current, { yPercent: -50, autoAlpha: 0, duration, ease: "expo.inOut", onComplete: () => { current.remove(); pool.push(current); } });
+          }
+          gsap.to(incoming, { yPercent: 0, autoAlpha: 1, duration, delay: 0.1, ease: "expo.inOut" });
+        }
+        setup();
+        ScrollTrigger.create({ trigger: root, start: 'top bottom', end: 'bottom top', onEnter: () => tl.play(), onLeave: () => tl.pause(), onEnterBack: () => tl.play(), onLeaveBack: () => tl.pause() });
+        document.addEventListener('visibilitychange', () => document.hidden ? tl.pause() : tl.play());
+      });
+    }
+
+    // ==================== MARQUEE WITH SCROLL DIRECTION (OSMO) ====================
+    function initMarqueeScrollDirection() {
+      document.querySelectorAll('[data-marquee-scroll-direction-target]').forEach((marquee) => {
+        const marqueeContent = marquee.querySelector('[data-marquee-collection-target]');
+        const marqueeScroll = marquee.querySelector('[data-marquee-scroll-target]');
+        if (!marqueeContent || !marqueeScroll) return;
+        const { marqueeSpeed: speed, marqueeDirection: direction, marqueeDuplicate: duplicate, marqueeScrollSpeed: scrollSpeed } = marquee.dataset;
+        const marqueeSpeedAttr = parseFloat(speed);
+        const marqueeDirectionAttr = direction === 'right' ? 1 : -1;
+        const duplicateAmount = parseInt(duplicate || 0);
+        const scrollSpeedAttr = parseFloat(scrollSpeed);
+        const speedMultiplier = window.innerWidth < 479 ? 0.25 : window.innerWidth < 991 ? 0.5 : 1;
+        let marqueeSpeed = marqueeSpeedAttr * (marqueeContent.offsetWidth / window.innerWidth) * speedMultiplier;
+        marqueeScroll.style.marginLeft = `${scrollSpeedAttr * -1}%`;
+        marqueeScroll.style.width = `${(scrollSpeedAttr * 2) + 100}%`;
+        if (duplicateAmount > 0) {
+          const fragment = document.createDocumentFragment();
+          for (let i = 0; i < duplicateAmount; i++) fragment.appendChild(marqueeContent.cloneNode(true));
+          marqueeScroll.appendChild(fragment);
+        }
+        const marqueeItems = marquee.querySelectorAll('[data-marquee-collection-target]');
+        const animation = gsap.to(marqueeItems, { xPercent: -100, repeat: -1, duration: marqueeSpeed, ease: 'linear' }).totalProgress(0.5);
+        gsap.set(marqueeItems, { xPercent: marqueeDirectionAttr === 1 ? 100 : -100 });
+        animation.timeScale(marqueeDirectionAttr);
+        animation.play();
+        marquee.setAttribute('data-marquee-status', 'normal');
+        ScrollTrigger.create({ trigger: marquee, start: 'top bottom', end: 'bottom top',
+          onUpdate: (self) => {
+            const isInverted = self.direction === 1;
+            animation.timeScale(isInverted ? -marqueeDirectionAttr : marqueeDirectionAttr);
+            marquee.setAttribute('data-marquee-status', isInverted ? 'normal' : 'inverted');
+          }
+        });
+        const tl2 = gsap.timeline({ scrollTrigger: { trigger: marquee, start: '0% 100%', end: '100% 0%', scrub: 0 } });
+        const scrollStart = marqueeDirectionAttr === -1 ? scrollSpeedAttr : -scrollSpeedAttr;
+        tl2.fromTo(marqueeScroll, { x: `${scrollStart}vw` }, { x: `${-scrollStart}vw`, ease: 'none' });
+      });
+    }
+
+    // ==================== FOOTER PARALLAX (OSMO) ====================
+    function initFooterParallax(){
+      document.querySelectorAll('[data-footer-parallax]').forEach(el => {
+        const tl = gsap.timeline({ scrollTrigger: { trigger: el, start: 'clamp(top bottom)', end: 'clamp(top top)', scrub: true } });
+        const inner = el.querySelector('[data-footer-parallax-inner]');
+        const dark = el.querySelector('[data-footer-parallax-dark]');
+        if (inner) tl.from(inner, { yPercent: -25, ease: 'linear' });
+        if (dark) tl.from(dark, { opacity: 0.5, ease: 'linear' }, '<');
+      });
+    }
+
+    // ==================== LINE REVEAL TESTIMONIALS (OSMO) ====================
+    function initLineRevealTestimonials() {
+      const wraps = document.querySelectorAll("[data-testimonial-wrap]");
+      if (!wraps.length) return;
+      wraps.forEach((wrap) => {
+        const list = wrap.querySelector("[data-testimonial-list]");
+        if (!list) return;
+        const items = Array.from(list.querySelectorAll("[data-testimonial-item]"));
+        if (!items.length) return;
+        const btnPrev = wrap.querySelector("[data-prev]");
+        const btnNext = wrap.querySelector("[data-next]");
+        const elCurrent = wrap.querySelector("[data-current]");
+        const elTotal = wrap.querySelector("[data-total]");
+        if (elTotal) elTotal.textContent = String(items.length);
+        let activeIndex = items.findIndex((el) => el.classList.contains("is--active"));
+        if (activeIndex < 0) activeIndex = 0;
+        let isAnimating = false;
+        let reduceMotion = false;
+        const slides = items.map((item) => ({
+          item,
+          image: item.querySelector("[data-testimonial-img]"),
+          splitTargets: [item.querySelector("[data-testimonial-text]"), ...item.querySelectorAll("[data-testimonial-split]")].filter(Boolean),
+          splitInstances: [],
+          getLines() { return this.splitInstances.flatMap((instance) => instance.lines); },
+        }));
+        function setSlideState(slideIndex, isActive) {
+          const { item } = slides[slideIndex];
+          item.classList.toggle("is--active", isActive);
+          item.setAttribute("aria-hidden", String(!isActive));
+          gsap.set(item, { autoAlpha: isActive ? 1 : 0, pointerEvents: isActive ? "auto" : "none" });
+        }
+        function updateCounter() { if (elCurrent) elCurrent.textContent = String(activeIndex + 1); }
+        slides.forEach((_, i) => setSlideState(i, i === activeIndex));
+        updateCounter();
+        gsap.matchMedia().add({ reduce: "(prefers-reduced-motion: reduce)" }, (context) => { reduceMotion = context.conditions.reduce; });
+
+        // Check if SplitText is available
+        if (typeof SplitText !== 'undefined') {
+          slides.forEach((slide, slideIndex) => {
+            slide.splitInstances = slide.splitTargets.map((el) =>
+              SplitText.create(el, {
+                type: "lines", mask: "lines", linesClass: "text-line", autoSplit: true,
+                onSplit(self) {
+                  if (reduceMotion) return;
+                  const isActive = slideIndex === activeIndex;
+                  gsap.set(self.lines, { yPercent: isActive ? 0 : 110 });
+                  if (slide.image) gsap.set(slide.image, { clipPath: isActive ? "circle(50% at 50% 50%)" : "circle(0% at 50% 50%)" });
+                },
+              })
+            );
+          });
+        }
+
+        function goTo(nextIndex) {
+          if (isAnimating || nextIndex === activeIndex) return;
+          isAnimating = true;
+          const outgoingSlide = slides[activeIndex];
+          const incomingSlide = slides[nextIndex];
+          const tl = gsap.timeline({
+            onComplete: () => { setSlideState(activeIndex, false); setSlideState(nextIndex, true); activeIndex = nextIndex; updateCounter(); isAnimating = false; },
+          });
+          if (reduceMotion || typeof SplitText === 'undefined') {
+            tl.to(outgoingSlide.item, { autoAlpha: 0, duration: 0.4, ease: "power2" }, 0)
+              .fromTo(incomingSlide.item, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, ease: "power2" }, 0);
+            return;
+          }
+          const outgoingLines = outgoingSlide.getLines();
+          const incomingLines = incomingSlide.getLines();
+          gsap.set(incomingSlide.item, { autoAlpha: 1, pointerEvents: "auto" });
+          gsap.set(incomingLines, { yPercent: 110 });
+          if (incomingSlide.image) gsap.set(incomingSlide.image, { clipPath: "circle(0% at 50% 50%)" });
+          if (outgoingSlide.image) gsap.set(outgoingSlide.image, { clipPath: "circle(50% at 50% 50%)" });
+          tl.to(outgoingLines, { yPercent: -110, duration: 0.6, ease: "power4.inOut", stagger: { amount: 0.25 } }, 0);
+          if (outgoingSlide.image) tl.to(outgoingSlide.image, { clipPath: "circle(0% at 50% 50%)", duration: 0.6, ease: "power4.inOut" }, 0);
+          tl.to(incomingLines, { yPercent: 0, duration: 0.7, ease: "power4.inOut", stagger: { amount: 0.4 } }, ">-=0.3");
+          if (incomingSlide.image) tl.to(incomingSlide.image, { clipPath: "circle(50% at 50% 50%)", duration: 0.75, ease: "power4.inOut" }, "<");
+          tl.set(outgoingSlide.item, { autoAlpha: 0 }, ">");
+        }
+        if (btnNext) btnNext.addEventListener("click", () => goTo((activeIndex + 1) % slides.length));
+        if (btnPrev) btnPrev.addEventListener("click", () => goTo((activeIndex - 1 + slides.length) % slides.length));
+
+        // Autoplay
+        const autoplay = wrap.getAttribute('data-autoplay') === 'true';
+        const autoplayDuration = parseInt(wrap.getAttribute('data-autoplay-duration') || 5000);
+        if (autoplay) {
+          let autoTimer;
+          function startAuto() { autoTimer = setInterval(() => goTo((activeIndex + 1) % slides.length), autoplayDuration); }
+          function resetAuto() { clearInterval(autoTimer); startAuto(); }
+          startAuto();
+          if (btnNext) btnNext.addEventListener('click', resetAuto);
+          if (btnPrev) btnPrev.addEventListener('click', resetAuto);
+        }
+      });
+    }
+
+    // ==================== INIT ALL ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      initLoaderThreeSteps();
+      initContentRevealScroll();
+      initCounters();
+      initLogoWallCycle();
+      initMarqueeScrollDirection();
+      initFooterParallax();
+      initLineRevealTestimonials();
+    });
+  </script>
+
+</body>
+</html>
