@@ -559,49 +559,147 @@ button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
   overflow: hidden;
 }
 
-.testimonials-wrapper {
-  max-width: 720px;
-  margin: 0 auto;
-  text-align: center;
+.testimonials-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.testimonials-sidebar {
+  position: sticky;
+  top: 140px;
+}
+
+.testimonials-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--ember);
+  margin-bottom: 20px;
+}
+
+.testimonials-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.testimonials-nav-btn {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--light-teal);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--light-teal);
+}
+
+.testimonials-nav-btn:hover {
+  background: var(--ember);
+  border-color: var(--ember);
+  color: var(--white);
+}
+
+.testimonials-nav-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.testimonials-content {
   position: relative;
 }
 
-.testimonial-quote-mark {
-  font-size: 120px;
-  color: var(--ember);
-  font-family: 'Playfair Display', serif;
-  line-height: 0.6;
-  margin-bottom: 24px;
-  opacity: 0.6;
-  display: block;
+.testimonials-counter {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.testimonials-counter-num {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--light-teal);
+  font-variant-numeric: tabular-nums;
+}
+
+.testimonials-counter-label {
+  font-size: 16px;
+  color: var(--light-teal);
+}
+
+.testimonials-slider {
+  position: relative;
+  min-height: 320px;
 }
 
 .testimonial-slide {
-  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(20px);
+  pointer-events: none;
 }
 
 .testimonial-slide.active {
-  display: block;
   opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .testimonial-text {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(20px, 2.5vw, 26px);
-  line-height: 1.6;
-  color: var(--cream-teal);
-  font-style: italic;
-  margin-bottom: 36px;
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(26px, 3.5vw, 40px);
+  line-height: 1.35;
+  color: var(--white);
+  margin-bottom: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.testimonial-author-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.testimonial-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--basalt);
+  border: 1px solid rgba(186,217,220,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--light-teal);
+  font-weight: 600;
+}
+
+.testimonial-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .testimonial-author {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
   font-size: 16px;
+  font-weight: 600;
   color: var(--white);
-  margin-bottom: 4px;
 }
 
 .testimonial-role {
@@ -610,27 +708,20 @@ button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
   font-weight: 400;
 }
 
-.testimonial-dots {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 48px;
-}
-
-.testimonial-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(186,217,220,0.2);
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0;
-}
-
-.testimonial-dot.active {
-  background: var(--ember);
-  box-shadow: 0 0 12px rgba(249,67,43,0.4);
+@media (max-width: 768px) {
+  .testimonials-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .testimonials-sidebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: static;
+  }
+  .testimonials-label { margin-bottom: 0; }
+  .testimonial-text { font-size: clamp(22px, 5vw, 32px); }
+  .testimonials-slider { min-height: 380px; }
 }
 
 /* ========== PRICING ========== */
@@ -1157,29 +1248,67 @@ button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
 <!-- ========== TESTIMONIALS ========== -->
 <section id="testimonials">
   <div class="container">
-    <div class="section-eyebrow">What Operators Say</div>
-    <h2 class="section-title" style="margin-bottom: 64px;">Trusted by mobility leaders<br>around the world.</h2>
-    <div class="testimonials-wrapper">
-      <span class="testimonial-quote-mark">&ldquo;</span>
-      <div class="testimonial-slide active" data-index="0">
-        <p class="testimonial-text">DRYFT transformed how we manage our fleet of 12,000 e-scooters across 8 European cities. The AI rebalancing alone reduced operational costs by 34% in the first quarter.</p>
-        <div class="testimonial-author">Maria Kowalski</div>
-        <div class="testimonial-role">VP of Operations, VoltRide GmbH</div>
+    <div class="testimonials-layout">
+      <div class="testimonials-sidebar">
+        <div>
+          <div class="testimonials-label">Customers</div>
+          <div class="testimonials-nav">
+            <button class="testimonials-nav-btn" id="testPrev" aria-label="Previous testimonial">
+              <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l6-6M5 12l6 6"/></svg>
+            </button>
+            <button class="testimonials-nav-btn" id="testNext" aria-label="Next testimonial">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M19 12l-6-6M19 12l-6 6"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="testimonial-slide" data-index="1">
-        <p class="testimonial-text">The dynamic pricing engine is a game-changer. We saw a 28% revenue increase without any negative impact on rider satisfaction scores. The platform practically runs itself.</p>
-        <div class="testimonial-author">James Chen</div>
-        <div class="testimonial-role">CEO, PedalFlow Inc.</div>
-      </div>
-      <div class="testimonial-slide" data-index="2">
-        <p class="testimonial-text">Regulatory compliance used to be our biggest headache. DRYFT automates every report, every permit renewal, every geo-fence update. We can focus on growing instead of paperwork.</p>
-        <div class="testimonial-author">Amara Osei</div>
-        <div class="testimonial-role">Director of Growth, UrbanShift Lagos</div>
-      </div>
-      <div class="testimonial-dots">
-        <button class="testimonial-dot active" data-slide="0" aria-label="Testimonial 1"></button>
-        <button class="testimonial-dot" data-slide="1" aria-label="Testimonial 2"></button>
-        <button class="testimonial-dot" data-slide="2" aria-label="Testimonial 3"></button>
+      <div class="testimonials-content">
+        <div class="testimonials-counter">
+          <span class="testimonials-counter-num" id="testCounter">1 / 4</span>
+          <span class="testimonials-counter-label">What operators say about DRYFT.AI:</span>
+        </div>
+        <div class="testimonials-slider" id="testimonialSlider">
+          <div class="testimonial-slide active" data-slide="0">
+            <p class="testimonial-text">&ldquo;DRYFT transformed how we manage our fleet of 12,000 e-scooters across 8 European cities. The AI rebalancing alone reduced operational costs by 34% in the first quarter.&rdquo;</p>
+            <div class="testimonial-author-row">
+              <div class="testimonial-avatar">MK</div>
+              <div class="testimonial-author-info">
+                <span class="testimonial-author">Maria Kowalski</span>
+                <span class="testimonial-role">VP of Operations, VoltRide GmbH</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-slide" data-slide="1">
+            <p class="testimonial-text">&ldquo;The dynamic pricing engine is a game-changer. We saw a 28% revenue increase without any negative impact on rider satisfaction scores. The platform practically runs itself.&rdquo;</p>
+            <div class="testimonial-author-row">
+              <div class="testimonial-avatar">JC</div>
+              <div class="testimonial-author-info">
+                <span class="testimonial-author">James Chen</span>
+                <span class="testimonial-role">CEO, PedalFlow Inc.</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-slide" data-slide="2">
+            <p class="testimonial-text">&ldquo;Regulatory compliance used to be our biggest headache. DRYFT automates every report, every permit renewal, every geo-fence update. We can focus on growing instead of paperwork.&rdquo;</p>
+            <div class="testimonial-author-row">
+              <div class="testimonial-avatar">AO</div>
+              <div class="testimonial-author-info">
+                <span class="testimonial-author">Amara Osei</span>
+                <span class="testimonial-role">Director of Growth, UrbanShift Lagos</span>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-slide" data-slide="3">
+            <p class="testimonial-text">&ldquo;Scaling from 200 to 3,000 vehicles was seamless. The rebalancing algorithm alone reduced our dead-mileage by 40%. DRYFT.AI isn&rsquo;t software &mdash; it&rsquo;s a competitive advantage.&rdquo;</p>
+            <div class="testimonial-author-row">
+              <div class="testimonial-avatar">RM</div>
+              <div class="testimonial-author-info">
+                <span class="testimonial-author">Rajan Mehta</span>
+                <span class="testimonial-role">CEO, CityWheel Asia</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1488,33 +1617,34 @@ button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
   // ===== TESTIMONIALS =====
   function initTestimonials() {
     const slides = document.querySelectorAll('.testimonial-slide');
-    const dots = document.querySelectorAll('.testimonial-dot');
+    const counter = document.getElementById('testCounter');
+    const prevBtn = document.getElementById('testPrev');
+    const nextBtn = document.getElementById('testNext');
+    const total = slides.length;
     let current = 0;
     let interval;
 
     function goTo(index) {
       slides[current].classList.remove('active');
-      dots[current].classList.remove('active');
-      current = index;
+      current = ((index % total) + total) % total;
       slides[current].classList.add('active');
-      dots[current].classList.add('active');
+      counter.textContent = `${current + 1} / ${total}`;
     }
 
-    function next() {
-      goTo((current + 1) % slides.length);
-    }
+    function next() { goTo(current + 1); }
+    function prev() { goTo(current - 1); }
 
     function startAutoplay() {
       interval = setInterval(next, 5000);
     }
 
-    dots.forEach(dot => {
-      dot.addEventListener('click', () => {
-        clearInterval(interval);
-        goTo(parseInt(dot.dataset.slide));
-        startAutoplay();
-      });
-    });
+    function resetAutoplay() {
+      clearInterval(interval);
+      startAutoplay();
+    }
+
+    prevBtn.addEventListener('click', () => { prev(); resetAutoplay(); });
+    nextBtn.addEventListener('click', () => { next(); resetAutoplay(); });
 
     startAutoplay();
   }
