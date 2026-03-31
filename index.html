@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/InertiaPlugin.min.js"></script>
   <style>
     /* ========================= RESET & BASE ========================= */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,8 +22,8 @@
       --orange: #7cb3ff;
       --orange-light: #a3cbff;
       --white: #ffffff;
-      --gray-100: #e8ecf4;
-      --gray-200: #c9d1e0;
+      --gray-100: #e4eaf3;
+      --gray-200: #d6dfed;
       --gray-300: #9ba4b8;
       --gray-400: #6b7894;
       --gray-500: #4a5568;
@@ -59,7 +60,7 @@
     body {
       font-family: var(--font-body);
       color: var(--navy);
-      background: var(--white);
+      background: #eef2f7;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
@@ -261,25 +262,32 @@
       position: relative;
       overflow: hidden;
     }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -30%;
-      right: -20%;
-      width: 70%;
-      height: 70%;
-      background: radial-gradient(circle, rgba(124, 179, 255, 0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
+    .hero::before,
     .hero::after {
-      content: '';
-      position: absolute;
-      bottom: -20%;
-      left: -10%;
-      width: 50%;
-      height: 50%;
-      background: radial-gradient(circle, rgba(124, 179, 255, 0.05) 0%, transparent 60%);
+      display: none;
+    }
+
+    /* Dots grid overlay */
+    .dots-container {
+      gap: 2em;
       pointer-events: none;
+      flex-flow: wrap;
+      justify-content: center;
+      align-items: center;
+      display: flex;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+    .dot {
+      will-change: transform, background-color;
+      transform-origin: center;
+      background-color: #1a2a40;
+      border-radius: 50%;
+      width: 0.5em;
+      height: 0.5em;
+      position: relative;
+      transform: translate(0);
     }
     .hero__inner {
       max-width: 1280px;
@@ -349,16 +357,7 @@
     }
     .btn-secondary:hover { color: var(--white); }
     .hero__grid-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 4em 4em;
-      pointer-events: none;
+      display: none;
     }
     .hero__scroll-indicator {
       position: absolute;
@@ -985,6 +984,7 @@
 
   <!-- ========================= HERO ========================= -->
   <section class="hero">
+    <div data-dots-container-init="" class="dots-container"><div class="dot"></div></div>
     <div class="hero__grid-bg"></div>
     <div class="hero__inner" data-reveal-group data-stagger="120">
       <p class="hero__eyebrow">Shared Mobility Software</p>
@@ -1626,7 +1626,158 @@
       initMarqueeScrollDirection();
       initFooterParallax();
       initLineRevealTestimonials();
+      initGlowingInteractiveDotsGrid();
     });
+
+    gsap.registerPlugin(InertiaPlugin);
+
+    function initGlowingInteractiveDotsGrid() {
+      document.querySelectorAll('[data-dots-container-init]').forEach(container => {
+        const colors         = { base: "#1a2a40", active: "#7cb3ff" };
+        const threshold      = 200;
+        const speedThreshold = 100;
+        const shockRadius    = 325;
+        const shockPower     = 5;
+        const maxSpeed       = 5000;
+        const centerHole     = false;
+
+        let dots       = [];
+        let dotCenters = [];
+
+        function buildGrid() {
+          container.innerHTML = "";
+          dots = [];
+          dotCenters = [];
+
+          const style = getComputedStyle(container);
+          const dotPx = parseFloat(style.fontSize);
+          const gapPx = dotPx * 2;
+          const contW = container.clientWidth;
+          const contH = container.clientHeight;
+
+          const cols  = Math.floor((contW + gapPx) / (dotPx + gapPx));
+          const rows  = Math.floor((contH + gapPx) / (dotPx + gapPx));
+          const total = cols * rows;
+
+          const holeCols = centerHole ? (cols % 2 === 0 ? 4 : 5) : 0;
+          const holeRows = centerHole ? (rows % 2 === 0 ? 4 : 5) : 0;
+          const startCol = (cols - holeCols) / 2;
+          const startRow = (rows - holeRows) / 2;
+
+          for (let i = 0; i < total; i++) {
+            const row    = Math.floor(i / cols);
+            const col    = i % cols;
+            const isHole = centerHole &&
+              row >= startRow && row < startRow + holeRows &&
+              col >= startCol && col < startCol + holeCols;
+
+            const d = document.createElement("div");
+            d.classList.add("dot");
+
+            if (isHole) {
+              d.style.visibility = "hidden";
+              d._isHole = true;
+            } else {
+              gsap.set(d, { x: 0, y: 0, backgroundColor: colors.base });
+              d._inertiaApplied = false;
+            }
+
+            container.appendChild(d);
+            dots.push(d);
+          }
+
+          requestAnimationFrame(() => {
+            dotCenters = dots
+              .filter(d => !d._isHole)
+              .map(d => {
+                const r = d.getBoundingClientRect();
+                return {
+                  el: d,
+                  x:  r.left + window.scrollX + r.width  / 2,
+                  y:  r.top  + window.scrollY + r.height / 2
+                };
+              });
+          });
+        }
+
+        window.addEventListener("resize", buildGrid);
+        buildGrid();
+
+        let lastTime = 0, lastX = 0, lastY = 0;
+
+        window.addEventListener("mousemove", e => {
+          const now   = performance.now();
+          const dt    = now - lastTime || 16;
+          let   dx    = e.pageX - lastX;
+          let   dy    = e.pageY - lastY;
+          let   vx    = dx / dt * 1000;
+          let   vy    = dy / dt * 1000;
+          let   speed = Math.hypot(vx, vy);
+
+          if (speed > maxSpeed) {
+            const scale = maxSpeed / speed;
+            vx *= scale; vy *= scale; speed = maxSpeed;
+          }
+
+          lastTime = now;
+          lastX    = e.pageX;
+          lastY    = e.pageY;
+
+          requestAnimationFrame(() => {
+            dotCenters.forEach(({ el, x, y }) => {
+              const dist = Math.hypot(x - e.pageX, y - e.pageY);
+              const t    = Math.max(0, 1 - dist / threshold);
+              const col  = gsap.utils.interpolate(colors.base, colors.active, t);
+              gsap.set(el, { backgroundColor: col });
+
+              if (speed > speedThreshold && dist < threshold && !el._inertiaApplied) {
+                el._inertiaApplied = true;
+                const pushX = (x - e.pageX) + vx * 0.005;
+                const pushY = (y - e.pageY) + vy * 0.005;
+
+                gsap.to(el, {
+                  inertia: { x: pushX, y: pushY, resistance: 750 },
+                  onComplete() {
+                    gsap.to(el, {
+                      x: 0,
+                      y: 0,
+                      duration: 1.5,
+                      ease: "elastic.out(1,0.75)"
+                    });
+                    el._inertiaApplied = false;
+                  }
+                });
+              }
+            });
+          });
+        });
+
+        window.addEventListener("click", e => {
+          dotCenters.forEach(({ el, x, y }) => {
+            const dist = Math.hypot(x - e.pageX, y - e.pageY);
+            if (dist < shockRadius && !el._inertiaApplied) {
+              el._inertiaApplied = true;
+              const falloff = Math.max(0, 1 - dist / shockRadius);
+              const pushX   = (x - e.pageX) * shockPower * falloff;
+              const pushY   = (y - e.pageY) * shockPower * falloff;
+
+              gsap.to(el, {
+                inertia: { x: pushX, y: pushY, resistance: 750 },
+                onComplete() {
+                  gsap.to(el, {
+                    x: 0,
+                    y: 0,
+                    duration: 1.5,
+                    ease: "elastic.out(1,0.75)"
+                  });
+                  el._inertiaApplied = false;
+                }
+              });
+            }
+          });
+        });
+      });
+    }
   </script>
 
 </body>
